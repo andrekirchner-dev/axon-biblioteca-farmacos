@@ -76,56 +76,12 @@ export default function PhoneShell({ children }: { children: React.ReactNode }) 
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 72px;
             min-height: 100vh;
-            padding: 40px 60px;
+            padding: 40px;
             overflow: hidden;
           }
 
-          /* ── Branding ── */
-          .ps-brand {
-            display: flex; flex-direction: column;
-            gap: 0; max-width: 320px; flex-shrink: 0;
-          }
-          .ps-badge {
-            font-family: ${FONTS.mono};
-            font-size: 9px; letter-spacing: 0.22em;
-            color: ${C.orange}; margin-bottom: 16px;
-          }
-          .ps-brand h1 {
-            font-family: ${FONTS.serif};
-            font-size: 46px; color: ${C.text};
-            line-height: 1.04; letter-spacing: 0.02em;
-            margin: 0 0 14px 0;
-          }
-          .ps-brand p {
-            font-family: ${FONTS.body};
-            font-size: 14px; color: ${C.muted};
-            line-height: 1.75; margin: 0 0 32px 0;
-          }
-          .ps-features {
-            display: flex; flex-direction: column;
-            gap: 11px; margin-bottom: 36px;
-          }
-          .ps-feat {
-            display: flex; align-items: center; gap: 10px;
-            font-family: ${FONTS.mono}; font-size: 11px;
-            color: ${C.muted}; letter-spacing: 0.02em;
-          }
-          .ps-dot {
-            width: 5px; height: 5px; border-radius: 50%;
-            background: ${C.orange}; flex-shrink: 0; opacity: 0.7;
-          }
-          .ps-stack {
-            display: flex; flex-wrap: wrap; gap: 7px;
-          }
-          .ps-pill {
-            font-family: ${FONTS.mono}; font-size: 9px;
-            letter-spacing: 0.1em; color: ${C.faint};
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 20px; padding: 5px 12px;
-            background: rgba(255,255,255,0.03);
-          }
+          .ps-brand { display: none; }
 
           /* ── Outer wrapper para buttons ── */
           .ps-phone-outer {
@@ -229,19 +185,12 @@ export default function PhoneShell({ children }: { children: React.ReactNode }) 
           /* Escala em telas curtas */
           @media (max-height: 940px) {
             .ps-phone-outer { transform: scale(0.86); transform-origin: center; }
-            .ps-layout { gap: 48px; }
-            .ps-brand h1 { font-size: 38px; }
           }
           @media (max-height: 800px) {
             .ps-phone-outer { transform: scale(0.76); transform-origin: center; }
           }
         }
 
-        /* Telas grandes: espaçamento extra */
-        @media (min-width: 1440px) {
-          .ps-layout { gap: 100px; }
-          .ps-brand { max-width: 360px; }
-        }
       `}</style>
 
       {/* Background glow (desktop) */}
@@ -252,28 +201,6 @@ export default function PhoneShell({ children }: { children: React.ReactNode }) 
       </div>
 
       <div className="ps-layout">
-        {/* Painel de branding */}
-        <div className="ps-brand">
-          <div className="ps-badge">AXON · PHARMLIB</div>
-          <h1>Axonpédia</h1>
-          <p>Biblioteca interativa de psicofarmacologia para psiquiatras e residentes de psiquiatria.</p>
-
-          <div className="ps-features">
-            {FEATURES.map((f) => (
-              <div key={f} className="ps-feat">
-                <div className="ps-dot" />
-                {f}
-              </div>
-            ))}
-          </div>
-
-          <div className="ps-stack">
-            {STACK.map((t) => (
-              <span key={t} className="ps-pill">{t}</span>
-            ))}
-          </div>
-        </div>
-
         {/* iPhone 17 */}
         <div className="ps-phone-outer">
           <div className="ps-btn ps-action"  aria-hidden="true" />
