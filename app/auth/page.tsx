@@ -41,7 +41,7 @@ export default function AuthPage() {
       })
       .catch((err: AuthError) => {
         const msg = ERROR_MESSAGES[err.code] ?? `Erro: ${err.code}`;
-        setLoginError(msg);
+        setLoginError(msg + `\n[${err.code}]`);
       })
       .finally(() => setSigningIn(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,7 +53,7 @@ export default function AuthPage() {
       await signInWithRedirect(getFirebaseAuth(), googleProvider);
     } catch (err) {
       const code = (err as AuthError).code ?? "";
-      setLoginError(ERROR_MESSAGES[code] ?? `Erro: ${code || String(err)}`);
+      setLoginError((ERROR_MESSAGES[code] ?? `Erro: ${code || String(err)}`) + `\n[${code}]`);
     }
   }
 
