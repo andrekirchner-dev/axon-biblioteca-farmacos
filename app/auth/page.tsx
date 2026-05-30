@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   type AuthError,
@@ -13,7 +14,7 @@ import { C, FONTS } from "@/lib/tokens";
 
 const ERROR_MESSAGES: Record<string, string> = {
   "auth/popup-closed-by-user":    "Popup fechado antes de concluir o login.",
-  "auth/popup-blocked":           "Popup bloqueado pelo browser.",
+  "auth/popup-blocked":           "Popup bloqueado pelo browser.\nTentando via redirect…",
   "auth/unauthorized-domain":     "Domínio não autorizado no Firebase Console.\nAdicione axonpedia.vercel.app em Authentication → Settings → Authorized domains.",
   "auth/operation-not-allowed":   "Login com Google não está habilitado.\nAtive em Firebase Console → Authentication → Sign-in method → Google.",
   "auth/network-request-failed":  "Sem conexão. Verifique sua internet.",
@@ -26,34 +27,47 @@ export default function AuthPage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [signingIn, setSigningIn]   = useState(false);
 
-  // Redireciona se já autenticado
   useEffect(() => {
     if (!loading && user) router.replace("/biblioteca");
   }, [user, loading, router]);
 
-  // Captura resultado do redirect após retorno do Google
+  // Captura resultado se o usuário voltou de um redirect (fallback)
   useEffect(() => {
     const auth = getFirebaseAuth();
-    setSigningIn(true);
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) router.replace("/biblioteca");
       })
       .catch((err: AuthError) => {
-        const msg = ERROR_MESSAGES[err.code] ?? `Erro: ${err.code}`;
-        setLoginError(msg + `\n[${err.code}]`);
-      })
-      .finally(() => setSigningIn(false));
+        if (err.code && err.code !== "auth/no-auth-event") {
+          setLoginError(ERROR_MESSAGES[err.code] ?? `Erro: ${err.code}`);
+        }
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleGoogleLogin() {
     setLoginError(null);
+    setSigningIn(true);
     try {
-      await signInWithRedirect(getFirebaseAuth(), googleProvider);
+      await signInWithPopup(getFirebaseAuth(), googleProvider);
+      // onAuthStateChanged vai detectar o user e redirecionar via useEffect acima
     } catch (err) {
       const code = (err as AuthError).code ?? "";
-      setLoginError((ERROR_MESSAGES[code] ?? `Erro: ${code || String(err)}`) + `\n[${code}]`);
+      if (code === "auth/popup-blocked") {
+        // Fallback para redirect se popup bloqueado
+        try {
+          await signInWithRedirect(getFirebaseAuth(), googleProvider);
+          return; // página vai redirecionar
+        } catch (e2) {
+          const c2 = (e2 as AuthError).code ?? "";
+          setLoginError(ERROR_MESSAGES[c2] ?? `Erro: ${c2 || String(e2)}`);
+        }
+      } else if (code !== "auth/popup-closed-by-user") {
+        setLoginError(ERROR_MESSAGES[code] ?? `Erro: ${code || String(err)}`);
+      }
+    } finally {
+      setSigningIn(false);
     }
   }
 
@@ -125,7 +139,7 @@ export default function AuthPage() {
                 borderTopColor: "transparent", borderRadius: "50%",
                 animation: "spin 0.8s linear infinite",
               }} />
-              {signingIn ? "redirecionando…" : "verificando sessão…"}
+              {signingIn ? "entrando…" : "verificando sessão…"}
             </>
           ) : (
             <>
