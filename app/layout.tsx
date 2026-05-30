@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, IBM_Plex_Mono, Lora } from "next/font/google";
-import FirebaseAnalytics from "@/components/FirebaseAnalytics";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -34,10 +33,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${dmSerif.variable} ${ibmMono.variable} ${lora.variable}`}>
-      <body>
-        <FirebaseAnalytics />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
