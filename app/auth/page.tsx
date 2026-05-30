@@ -1,26 +1,41 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, type AuthError } from "firebase/auth";
 import { getFirebaseAuth, googleProvider } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { C, FONTS } from "@/lib/tokens";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  "auth/popup-closed-by-user":       "Popup fechado antes de concluir o login.",
+  "auth/popup-blocked":              "Popup bloqueado pelo browser. Permita popups para este site.",
+  "auth/unauthorized-domain":        "Domínio não autorizado no Firebase Console.",
+  "auth/operation-not-allowed":      "Login com Google não está habilitado no Firebase Console.",
+  "auth/network-request-failed":     "Sem conexão. Verifique sua internet.",
+  "auth/cancelled-popup-request":    "Outro popup estava aberto. Tente novamente.",
+};
+
 export default function AuthPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [signingIn, setSigningIn]   = useState(false);
 
-  // Se já estiver logado, vai para biblioteca
   useEffect(() => {
     if (!loading && user) router.replace("/biblioteca");
   }, [user, loading, router]);
 
   async function handleGoogleLogin() {
+    setLoginError(null);
+    setSigningIn(true);
     try {
       await signInWithPopup(getFirebaseAuth(), googleProvider);
     } catch (err) {
-      console.error(err);
+      const code = (err as AuthError).code ?? "";
+      setLoginError(ERROR_MESSAGES[code] ?? `Erro: ${code || String(err)}`);
+    } finally {
+      setSigningIn(false);
     }
   }
 
@@ -72,17 +87,17 @@ export default function AuthPage() {
 
         <button
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={loading || signingIn}
           style={{
             width: "100%", padding: "14px 20px", borderRadius: 14,
             border: `1px solid ${C.borderM}`, background: C.panel,
-            cursor: loading ? "wait" : "pointer",
+            cursor: (loading || signingIn) ? "wait" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-            color: loading ? C.muted : C.text,
+            color: (loading || signingIn) ? C.muted : C.text,
             fontFamily: FONTS.mono, fontSize: 12, letterSpacing: "0.06em",
-            transition: "all 0.15s", opacity: loading ? 0.6 : 1,
+            transition: "all 0.15s", opacity: (loading || signingIn) ? 0.6 : 1,
           }}
-          onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = C.orange + "55"; }}
+          onMouseEnter={e => { if (!loading && !signingIn) e.currentTarget.style.borderColor = C.orange + "55"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.borderM; }}
         >
           {loading ? (
@@ -94,6 +109,15 @@ export default function AuthPage() {
               }} />
               verificando sessão…
             </>
+          ) : signingIn ? (
+            <>
+              <div style={{
+                width: 18, height: 18, border: `2px solid ${C.orange}`,
+                borderTopColor: "transparent", borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }} />
+              entrando…
+            </>
           ) : (
             <>
               <GoogleIcon />
@@ -102,6 +126,18 @@ export default function AuthPage() {
           )}
         </button>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+        {/* Erro de login */}
+        {loginError && (
+          <div style={{
+            marginTop: 16, padding: "12px 16px", borderRadius: 12, width: "100%",
+            background: C.rose + "15", border: `1px solid ${C.rose}44`,
+            color: C.rose, fontSize: 12, fontFamily: FONTS.mono,
+            lineHeight: 1.6, textAlign: "center",
+          }}>
+            {loginError}
+          </div>
+        )}
 
         <p style={{
           marginTop: 24, fontFamily: FONTS.mono, fontSize: 10,
