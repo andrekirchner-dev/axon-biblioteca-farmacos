@@ -14,7 +14,7 @@ import { C, FONTS } from "@/lib/tokens";
 const ERROR_MESSAGES: Record<string, string> = {
   "auth/popup-closed-by-user":    "Popup fechado antes de concluir o login.",
   "auth/popup-blocked":           "Popup bloqueado pelo browser.",
-  "auth/unauthorized-domain":     "Domínio não autorizado no Firebase Console.\nAdicione axon-biblioteca-farmacos.vercel.app em Authentication → Settings → Authorized domains.",
+  "auth/unauthorized-domain":     "Domínio não autorizado no Firebase Console.\nAdicione axonpedia.vercel.app em Authentication → Settings → Authorized domains.",
   "auth/operation-not-allowed":   "Login com Google não está habilitado.\nAtive em Firebase Console → Authentication → Sign-in method → Google.",
   "auth/network-request-failed":  "Sem conexão. Verifique sua internet.",
   "auth/invalid-api-key":         "Configuração inválida. Verifique as env vars do Firebase no Vercel.",
