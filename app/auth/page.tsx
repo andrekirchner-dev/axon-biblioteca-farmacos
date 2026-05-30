@@ -11,6 +11,7 @@ export default function AuthPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  // Se já estiver logado, vai para biblioteca
   useEffect(() => {
     if (!loading && user) router.replace("/biblioteca");
   }, [user, loading, router]);
@@ -23,8 +24,7 @@ export default function AuthPage() {
     }
   }
 
-  if (loading) return null;
-
+  // Renderiza o formulário imediatamente — não espera Firebase
   return (
     <div style={{
       minHeight: "100vh", background: C.bg,
@@ -72,20 +72,36 @@ export default function AuthPage() {
 
         <button
           onClick={handleGoogleLogin}
+          disabled={loading}
           style={{
             width: "100%", padding: "14px 20px", borderRadius: 14,
             border: `1px solid ${C.borderM}`, background: C.panel,
-            cursor: "pointer", display: "flex", alignItems: "center",
-            justifyContent: "center", gap: 12, color: C.text,
+            cursor: loading ? "wait" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+            color: loading ? C.muted : C.text,
             fontFamily: FONTS.mono, fontSize: 12, letterSpacing: "0.06em",
-            transition: "all 0.15s",
+            transition: "all 0.15s", opacity: loading ? 0.6 : 1,
           }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = C.orange + "55")}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = C.borderM)}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.borderColor = C.orange + "55"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.borderM; }}
         >
-          <GoogleIcon />
-          Entrar com Google
+          {loading ? (
+            <>
+              <div style={{
+                width: 18, height: 18, border: `2px solid ${C.muted}`,
+                borderTopColor: "transparent", borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }} />
+              verificando sessão…
+            </>
+          ) : (
+            <>
+              <GoogleIcon />
+              Entrar com Google
+            </>
+          )}
         </button>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
         <p style={{
           marginTop: 24, fontFamily: FONTS.mono, fontSize: 10,
