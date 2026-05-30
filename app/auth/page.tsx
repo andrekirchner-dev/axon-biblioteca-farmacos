@@ -2,18 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithPopup, type AuthError } from "firebase/auth";
+import {
+  signInWithRedirect,
+  getRedirectResult,
+  type AuthError,
+} from "firebase/auth";
 import { getFirebaseAuth, googleProvider } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { C, FONTS } from "@/lib/tokens";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  "auth/popup-closed-by-user":       "Popup fechado antes de concluir o login.",
-  "auth/popup-blocked":              "Popup bloqueado pelo browser. Permita popups para este site.",
-  "auth/unauthorized-domain":        "Domínio não autorizado no Firebase Console.",
-  "auth/operation-not-allowed":      "Login com Google não está habilitado no Firebase Console.",
-  "auth/network-request-failed":     "Sem conexão. Verifique sua internet.",
-  "auth/cancelled-popup-request":    "Outro popup estava aberto. Tente novamente.",
+  "auth/popup-closed-by-user":    "Popup fechado antes de concluir o login.",
+  "auth/popup-blocked":           "Popup bloqueado pelo browser.",
+  "auth/unauthorized-domain":     "Domínio não autorizado no Firebase Console.\nAdicione axon-biblioteca-farmacos.vercel.app em Authentication → Settings → Authorized domains.",
+  "auth/operation-not-allowed":   "Login com Google não está habilitado.\nAtive em Firebase Console → Authentication → Sign-in method → Google.",
+  "auth/network-request-failed":  "Sem conexão. Verifique sua internet.",
+  "auth/invalid-api-key":         "Configuração inválida. Verifique as env vars do Firebase no Vercel.",
 };
 
 export default function AuthPage() {
@@ -22,24 +26,37 @@ export default function AuthPage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [signingIn, setSigningIn]   = useState(false);
 
+  // Redireciona se já autenticado
   useEffect(() => {
     if (!loading && user) router.replace("/biblioteca");
   }, [user, loading, router]);
 
+  // Captura resultado do redirect após retorno do Google
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    setSigningIn(true);
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) router.replace("/biblioteca");
+      })
+      .catch((err: AuthError) => {
+        const msg = ERROR_MESSAGES[err.code] ?? `Erro: ${err.code}`;
+        setLoginError(msg);
+      })
+      .finally(() => setSigningIn(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleGoogleLogin() {
     setLoginError(null);
-    setSigningIn(true);
     try {
-      await signInWithPopup(getFirebaseAuth(), googleProvider);
+      await signInWithRedirect(getFirebaseAuth(), googleProvider);
     } catch (err) {
       const code = (err as AuthError).code ?? "";
       setLoginError(ERROR_MESSAGES[code] ?? `Erro: ${code || String(err)}`);
-    } finally {
-      setSigningIn(false);
     }
   }
 
-  // Renderiza o formulário imediatamente — não espera Firebase
   return (
     <div style={{
       minHeight: "100vh", background: C.bg,
@@ -100,23 +117,15 @@ export default function AuthPage() {
           onMouseEnter={e => { if (!loading && !signingIn) e.currentTarget.style.borderColor = C.orange + "55"; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.borderM; }}
         >
-          {loading ? (
+          {(loading || signingIn) ? (
             <>
               <div style={{
-                width: 18, height: 18, border: `2px solid ${C.muted}`,
+                width: 18, height: 18,
+                border: `2px solid ${signingIn ? C.orange : C.muted}`,
                 borderTopColor: "transparent", borderRadius: "50%",
                 animation: "spin 0.8s linear infinite",
               }} />
-              verificando sessão…
-            </>
-          ) : signingIn ? (
-            <>
-              <div style={{
-                width: 18, height: 18, border: `2px solid ${C.orange}`,
-                borderTopColor: "transparent", borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-              }} />
-              entrando…
+              {signingIn ? "redirecionando…" : "verificando sessão…"}
             </>
           ) : (
             <>
@@ -127,13 +136,12 @@ export default function AuthPage() {
         </button>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-        {/* Erro de login */}
         {loginError && (
           <div style={{
             marginTop: 16, padding: "12px 16px", borderRadius: 12, width: "100%",
             background: C.rose + "15", border: `1px solid ${C.rose}44`,
             color: C.rose, fontSize: 12, fontFamily: FONTS.mono,
-            lineHeight: 1.6, textAlign: "center",
+            lineHeight: 1.7, textAlign: "center", whiteSpace: "pre-line",
           }}>
             {loginError}
           </div>
