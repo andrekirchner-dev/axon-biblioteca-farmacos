@@ -77,7 +77,8 @@ export default function PhoneShell({ children }: { children: React.ReactNode }) 
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 40px;
+            padding: 20px 40px;
+            box-sizing: border-box;
             overflow: hidden;
           }
 
@@ -163,14 +164,20 @@ export default function PhoneShell({ children }: { children: React.ReactNode }) 
               inset 0 1px 3px rgba(0,0,0,0.9);
           }
 
-          /* Área de scroll do app */
+          /* Área de scroll do app — flex para forçar filho a preencher a tela do phone */
           .ps-content {
             width: 100%; height: 100%;
+            display: flex; flex-direction: column;
             overflow-y: auto; overflow-x: hidden;
             overscroll-behavior: contain;
             scrollbar-width: none;
           }
           .ps-content::-webkit-scrollbar { display: none; }
+          /* Sobrescreve minHeight: 100vh inline para usar altura real da tela do phone */
+          .ps-content > * {
+            flex: 1;
+            min-height: 0 !important;
+          }
 
           /* USB-C */
           .ps-usbc {
@@ -182,12 +189,15 @@ export default function PhoneShell({ children }: { children: React.ReactNode }) 
             border-radius: 3px;
           }
 
-          /* Escala em telas curtas */
-          @media (max-height: 940px) {
-            .ps-phone-outer { transform: scale(0.86); transform-origin: center; }
+          /* zoom afeta o layout (diferente de transform: scale) — phone sempre cabe na tela */
+          @media (max-height: 930px) {
+            .ps-phone-outer { zoom: 0.88; }
           }
-          @media (max-height: 800px) {
-            .ps-phone-outer { transform: scale(0.76); transform-origin: center; }
+          @media (max-height: 830px) {
+            .ps-phone-outer { zoom: 0.78; }
+          }
+          @media (max-height: 730px) {
+            .ps-phone-outer { zoom: 0.68; }
           }
         }
 
